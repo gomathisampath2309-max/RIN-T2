@@ -47,17 +47,62 @@ sample_type_map = {
 # Using 'type_swab' from the provided sheet columns for sample type mapping
 df_today["sample_type"] = df_today["type_swab"].astype(str).map(sample_type_map).fillna(df_today["type_swab"])
 
+# --- Calculate Age from p_dob ---
+df_today["p_dob"] = pd.to_datetime(df_today["p_dob"], errors="coerce") # Ensure p_dob is datetime
+
+def calculate_age_string(dob):
+    if pd.isna(dob):
+        return None
+    today = datetime.today()
+    years = today.year - dob.year
+    months = today.month - dob.month
+    days = today.day - dob.day
+
+    if days < 0:
+        months -= 1
+    if months < 0:
+        years -= 1
+        months += 12
+
+    return f"{years} yr {months} m"
+
+df_today["calculated_age"] = df_today["p_dob"].apply(calculate_age_string)
+
+# --- Map Gender ---
+gender_map = {
+    "1": "Male",
+    "2": "Female"
+}
+df_today["mapped_gender"] = df_today["p_gender"].astype(str).map(gender_map).fillna("Other") # Handle other values as 'Other'
 
 # --- Select Final Columns ---
-table = df_today[["sample_id", "submissiondate", "sample_type"]].copy()
-table.columns = ["Sample ID", "Sample Date/Time", "Sample Type"]
+table = df_today[["submissiondate", "sample_id", "sample_type", "prev_screen_no", "p_participant_id", "p_uhid", "p_child_name", "calculated_age", "mapped_gender"]].copy()
+table.columns = [
+    "Date & time of collection",
+    "Sample ID",
+    "Sample type",
+    "Screening ID",
+    "Participant ID",
+    "UHID",
+    "Name",
+    "Age",
+    "Sex"
+]
+
+# Add 'Fields to be filled by Virology Lab' columns
+table["Received by"] = ""
+table["Volume"] = ""
+table["Remarks"] = ""
+
+# Add 'S.No' column as the first column
+table.insert(0, 'S.No', range(1, 1 + len(table)))
 
 # --- Display Table ---
 st.subheader("📋 Today's Sample Collection Details")
 if table.empty:
     st.warning("No sample collections found for today.")
 else:
-    st.dataframe(table, use_container_width=True)
+    st.dataframe(table, width='stretch') # Changed use_container_width=True to width='stretch'
 
     # --- Download as Excel ---
     excel_filename = f"{datetime.today().strftime('%d-%m-%Y')}_RespIND T2_SampleCollection.xlsx"
