@@ -15,7 +15,7 @@ if password != "RIND123":
 # --- Load Google Sheet (with caching) ---
 @st.cache_data
 def load_sheet(sheet_id):
-    url = f"https://docs.google.com/spreadsheets/d/{data}/export?format=csv"
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
     return pd.read_csv(url, on_bad_lines="skip")
 
 df = load_sheet("1Nj-jx92SdX6TOnUXT2QidIXKbdiISFL20euWgrfZPdo")
@@ -24,17 +24,23 @@ df = load_sheet("1Nj-jx92SdX6TOnUXT2QidIXKbdiISFL20euWgrfZPdo")
 df.columns = df.columns.str.strip().str.lower()
 
 # --- Required Columns Check ---
-required_cols = ["submissiondate", "sample_id", "type_swab"]
+required_cols = ["submissiondate", "sample_id", "type_swab", "p_gender", "p_dob"]
 missing = [col for col in required_cols if col not in df.columns]
 if missing:
     st.error(f"Missing columns: {missing}")
     st.stop()
 
-df["submissiondate"] = pd.to_datetime(df["submissiondate"], errors="coerce").dt.tz_localize(None)
+# --- Convert Date ---
+df["submissiondate"] = pd.to_datetime(df["submissiondate"], errors="coerce")
 
-# --- Filter Today’s Data (improved) ---
-today = pd.Timestamp.today().normalize()
-df_today = df[df["submissiondate"].dt.normalize() == today].copy()
+# --- FIXED DATE FILTER (timezone safe) ---
+df["date_only"] = df["submissiondate"].dt.date
+today = datetime.now().date()
+df_today = df[df["date_only"] == today].copy()
+
+# --- DEBUG (remove after testing) ---
+# st.write("Today:", today)
+# st.write("Available dates:", df["date_only"].dropna().unique())
 
 # --- Sample Type Mapping ---
 sample_type_map = {
@@ -52,10 +58,10 @@ df_today["p_dob"] = pd.to_datetime(df_today["p_dob"], errors="coerce")
 def calculate_age(dob):
     if pd.isna(dob):
         return ""
-    today = datetime.today()
-    years = today.year - dob.year
-    months = today.month - dob.month
-    if today.day < dob.day:
+    today_dt = datetime.today()
+    years = today_dt.year - dob.year
+    months = today_dt.month - dob.month
+    if today_dt.day < dob.day:
         months -= 1
     if months < 0:
         years -= 1
@@ -109,7 +115,7 @@ table["Remarks"] = ""
 # --- Add Serial Number ---
 table.insert(0, "S.No", range(1, len(table) + 1))
 
-# --- Sort by time ---
+# --- Sort ---
 table = table.sort_values(by="Date & time of collection")
 
 # --- Display ---
@@ -125,13 +131,17 @@ else:
     ws = wb.active
     ws.title = "Today_Samples"
 
-    border = Border(left=Side(style="thin"), right=Side(style="thin"),
-                    top=Side(style="thin"), bottom=Side(style="thin"))
+    border = Border(
+        left=Side(style="thin"), right=Side(style="thin"),
+        top=Side(style="thin"), bottom=Side(style="thin")
+    )
     align_center = Alignment(horizontal="center", vertical="center")
 
     # Title
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=table.shape[1])
-    ws.cell(row=1, column=1, value="RespIND Daily Sample Collection Summary").font = Font(bold=True, size=12)
+    title_cell = ws.cell(row=1, column=1, value="RespIND Daily Sample Collection Summary")
+    title_cell.font = Font(bold=True, size=12)
+    title_cell.alignment = align_center
 
     # Header
     for col_num, col_name in enumerate(table.columns, 1):
