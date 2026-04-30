@@ -75,8 +75,18 @@ gender_map = {
 }
 df_today["mapped_gender"] = df_today["p_gender"].astype(str).map(gender_map).fillna("Other") # Handle other values as 'Other'
 
+# --- Map Location ---
+location_map = {
+    "1": "Q5S",
+    "2": "Q6E",
+    "3": "PICU",
+    "4": "PHDU"
+}
+df_today["mapped_location"] = df_today["location"].astype(str).map(location_map).fillna("Other") # Handle other values as 'Other'
+
+
 # --- Select Final Columns ---
-table = df_today[["sample_id", "date", "sample_type", "p_participant_id", "p_uhid", "p_child_name", "calculated_age", "mapped_gender", "location", "submissiondate"]].copy()
+table = df_today[["sample_id", "date", "sample_type", "p_participant_id", "p_uhid", "p_child_name", "calculated_age", "mapped_gender", "mapped_location", "submissiondate"]].copy()
 table.columns = [
     "Sample ID",
     "Date",    
