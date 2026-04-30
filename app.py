@@ -76,17 +76,18 @@ gender_map = {
 df_today["mapped_gender"] = df_today["p_gender"].astype(str).map(gender_map).fillna("Other") # Handle other values as 'Other'
 
 # --- Select Final Columns ---
-table = df_today[["submissiondate", "sample_id", "sample_type", "prev_screen_no", "p_participant_id", "p_uhid", "p_child_name", "calculated_age", "mapped_gender"]].copy()
+table = df_today[["sample_id", "date", "sample_type", "p_participant_id", "p_uhid", "p_child_name", "calculated_age", "mapped_gender", "location", "submissiondate"]].copy()
 table.columns = [
-    "Date & time of collection",
     "Sample ID",
+    "Date",    
     "Sample type",
-    "Screening ID",
     "Participant ID",
-    "UHID",
     "Name",
     "Age",
-    "Sex"
+    "Sex",
+    "UHID",
+    "Location",
+    "Date & time of collection"
 ]
 
 # Add 'Fields to be filled by Virology Lab' columns
