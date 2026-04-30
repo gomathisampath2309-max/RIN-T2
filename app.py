@@ -15,7 +15,7 @@ if password != "RIND123":
 # --- Load Google Sheet (with caching) ---
 @st.cache_data
 def load_sheet(sheet_id):
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+    url = f"https://docs.google.com/spreadsheets/d/{data}/export?format=csv"
     return pd.read_csv(url, on_bad_lines="skip")
 
 df = load_sheet("1Nj-jx92SdX6TOnUXT2QidIXKbdiISFL20euWgrfZPdo")
