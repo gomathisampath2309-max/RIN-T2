@@ -12,7 +12,7 @@ if password != "RIND123":
     st.warning("Please enter the correct password to access data.")
     st.stop()
 
-# --- Load Google Sheet (with caching) ---
+# --- Load Google Sheet ---
 @st.cache_data
 def load_sheet(sheet_id):
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
@@ -30,17 +30,27 @@ if missing:
     st.error(f"Missing columns: {missing}")
     st.stop()
 
-# --- Convert Date ---
-df["submissiondate"] = pd.to_datetime(df["submissiondate"], errors="coerce")
+# --- FIXED DATE HANDLING (VERY IMPORTANT) ---
+df["submissiondate"] = pd.to_datetime(
+    df["submissiondate"],
+    errors="coerce",
+    dayfirst=True  # handles Indian format
+)
 
-# --- FIXED DATE FILTER (timezone safe) ---
+# Adjust timezone (UTC → IST)
+df["submissiondate"] = df["submissiondate"] + pd.Timedelta(hours=5, minutes=30)
+
+# Extract only date
 df["date_only"] = df["submissiondate"].dt.date
+
 today = datetime.now().date()
+
+# Filter today
 df_today = df[df["date_only"] == today].copy()
 
-# --- DEBUG (remove after testing) ---
-# st.write("Today:", today)
-# st.write("Available dates:", df["date_only"].dropna().unique())
+# --- DEBUG (remove later if not needed) ---
+st.write("Today:", today)
+st.write("Available dates:", df["date_only"].dropna().unique())
 
 # --- Sample Type Mapping ---
 sample_type_map = {
@@ -80,7 +90,7 @@ df_today["Date"] = df_today["submissiondate"].dt.strftime("%d-%m-%Y")
 # --- Ensure Location Column ---
 df_today["location"] = df_today.get("location", "")
 
-# --- Build Final Table ---
+# --- Build Table ---
 table = df_today[[
     "sample_id",
     "Date",
@@ -139,9 +149,9 @@ else:
 
     # Title
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=table.shape[1])
-    title_cell = ws.cell(row=1, column=1, value="RespIND Daily Sample Collection Summary")
-    title_cell.font = Font(bold=True, size=12)
-    title_cell.alignment = align_center
+    title = ws.cell(row=1, column=1, value="RespIND Daily Sample Collection Summary")
+    title.font = Font(bold=True, size=12)
+    title.alignment = align_center
 
     # Header
     for col_num, col_name in enumerate(table.columns, 1):
