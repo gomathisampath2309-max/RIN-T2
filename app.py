@@ -78,13 +78,15 @@ df_today["mapped_gender"] = df_today["p_gender"].astype(str).map(gender_map).fil
 # --- Select Final Columns in Required Order ---
 table = df_today[[
     "sample_id",
-    "submissiondate",
+    "date",
     "type_swab",
     "p_participant_id",
     "p_child_name",
     "calculated_age",
     "mapped_gender",
-    "p_uhid"
+    "p_uhid",
+    "location",
+    "submissiondate"	
 ]].copy()
 
 # Rename columns as per requirement
@@ -118,7 +120,7 @@ table = table[[
     "Age",
     "Sex",
     "UHID",
-    "location",
+    "Location",
     "Date & time of collection"
 ]]
 
