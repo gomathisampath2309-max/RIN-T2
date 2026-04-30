@@ -75,27 +75,60 @@ gender_map = {
 }
 df_today["mapped_gender"] = df_today["p_gender"].astype(str).map(gender_map).fillna("Other") # Handle other values as 'Other'
 
-# --- Select Final Columns ---
-table = df_today[["submissiondate", "sample_id", "sample_type", "prev_screen_no", "p_participant_id", "p_uhid", "p_child_name", "calculated_age", "mapped_gender"]].copy()
+# --- Select Final Columns in Required Order ---
+table = df_today[[
+    "sample_id",
+    "submissiondate",
+    "type_swab",
+    "p_participant_id",
+    "p_child_name",
+    "calculated_age",
+    "mapped_gender",
+    "p_uhid"
+]].copy()
+
+# Rename columns as per requirement
 table.columns = [
-    "Date & time of collection",
     "Sample ID",
+    "Date & time of collection",
     "Sample type",
-    "Screening ID",
     "Participant ID",
-    "UHID",
     "Name",
     "Age",
-    "Sex"
+    "Sex",
+    "UHID"
 ]
 
-# Add 'Fields to be filled by Virology Lab' columns
+# Add Date column separately (only date part)
+table["Date"] = pd.to_datetime(table["Date & time of collection"]).dt.date
+
+# Add Ward column (if exists, otherwise blank)
+if "ward" in df_today.columns:
+    table["location"] = df_today["location"]
+else:
+    table["location"] = ""
+
+# Reorder exactly as requested
+table = table[[
+    "Sample ID",
+    "Date",
+    "Sample type",
+    "Participant ID",
+    "Name",
+    "Age",
+    "Sex",
+    "UHID",
+    "location",
+    "Date & time of collection"
+]]
+
+# Add remaining columns
 table["Received by"] = ""
 table["Volume"] = ""
 table["Remarks"] = ""
 
-# Add 'S.No' column as the first column
-table.insert(0, 'S.No', range(1, 1 + len(table)))
+# Add S.No at first
+table.insert(0, "S.No", range(1, len(table) + 1))
 
 # --- Display Table ---
 st.subheader("📋 Today's Sample Collection Details")
