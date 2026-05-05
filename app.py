@@ -86,7 +86,7 @@ location_map = {
 df_today["mapped_location"] = (df_today["location"].astype(str).str.strip() .str.replace(".0", "", regex=False).map(location_map).fillna("Other"))
 
 # --- Select Final Columns ---
-table = df_today[["sample_id", "date", "sample_type", "p_participant_id", "p_uhid", "p_child_name", "calculated_age", "mapped_gender", "mapped_location", "submissiondate"]].copy()
+table = df_today[["sample_id", "date", "sample_type", "p_participant_id", "p_child_name", "calculated_age", "mapped_gender", "p_uhid", "mapped_location", "submissiondate"]].copy()
 table.columns = [
     "Sample ID",
     "Date",    
